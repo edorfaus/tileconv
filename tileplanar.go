@@ -16,10 +16,6 @@ func (c TilePlanar) Size() int {
 
 // Encode implements Codec, encoding a tile image into bytes.
 func (c TilePlanar) Encode(src SourceImage, x, y int, dst []byte) {
-	// We need to clear the destination, in case we don't have 8 planes.
-	for i := c.BitDepth.BytesPerTile() - 1; i >= 0; i-- {
-		dst[i] = 0
-	}
 	planes := c.BitDepth.Planes()
 	for iy := 0; iy < 8; iy++ {
 		for ix := 0; ix < 8; ix++ {
@@ -35,7 +31,6 @@ func (c TilePlanar) Encode(src SourceImage, x, y int, dst []byte) {
 
 // Decode implements Codec, decoding bytes into an image.
 func (c TilePlanar) Decode(src []byte, dst DestImage, x, y int) {
-	_ = src[c.BitDepth.BytesPerTile()-1]
 	planes := c.BitDepth.Planes()
 	for iy := 0; iy < 8; iy++ {
 		row := [8]uint8{}
