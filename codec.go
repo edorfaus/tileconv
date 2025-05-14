@@ -1,9 +1,5 @@
 package chrconv
 
-import (
-	"image"
-)
-
 // Codec is the interface implemented by each tile image format type.
 //
 // Each system can thus pick the codec that corresponds to the way it
@@ -17,7 +13,7 @@ type Codec interface {
 	//
 	// Encode is not allowed to modify src, nor any part of dst that is
 	// beyond the first Size() bytes.
-	Encode(src image.PalettedImage, x, y int, dst []byte)
+	Encode(src SourceImage, x, y int, dst []byte)
 
 	// Decode the source data into an image at the given coordinates.
 	//
@@ -28,7 +24,7 @@ type Codec interface {
 	//
 	// Decode is not allowed to modify src, nor any part of dst except
 	// the color indexes inside the target area (the 8x8 tile at x,y).
-	Decode(src []byte, dst SettableImage, x, y int)
+	Decode(src []byte, dst DestImage, x, y int)
 
 	// Size returns the size of the encoded data for this codec.
 	//
@@ -37,10 +33,21 @@ type Codec interface {
 	Size() int
 }
 
-// SettableImage represents an indexed image that can be modified.
-//
-// It is the interface for images that Codec.Decode can draw into.
-type SettableImage interface {
-	image.Image
+// Image represents an indexed-color image that a Codec can use as both
+// a source and a destination, both encoding from and decoding into it.
+type Image interface {
+	SourceImage
+	DestImage
+}
+
+// SourceImage represents an indexed-color image that can be used as a
+// source image by Codec.Encode() (its pixels can be read).
+type SourceImage interface {
+	ColorIndexAt(x, y int) uint8
+}
+
+// DestImage represents an indexed-color image that can be used as a
+// destination image by Codec.Decode() (its pixels can be changed).
+type DestImage interface {
 	SetColorIndex(x, y int, idx uint8)
 }
