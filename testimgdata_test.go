@@ -102,6 +102,16 @@ func (d *testImageData) TilePlanar(x, y, planes int) []byte {
 	return data
 }
 
+func (d *testImageData) RowPlanar(x, y, planes int) []byte {
+	data := make([]byte, 0, planes*8)
+	for i := 0; i < 8; i++ {
+		for p := 0; p < planes; p++ {
+			data = append(data, d.RowByte(x, y+i, p))
+		}
+	}
+	return data
+}
+
 func (d *testImageData) Packed(x, y, depth int) []byte {
 	// This is a somewhat awkward and slow implementation, but it's
 	// important that it's different than the target implementation.
