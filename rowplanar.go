@@ -1,4 +1,4 @@
-package chrconv
+package tileconv
 
 // RowPlanar is a Codec that encodes each tile as a planar image, with
 // the planes for each row stored contiguously. In other words, all the

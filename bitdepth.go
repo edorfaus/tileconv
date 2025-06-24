@@ -1,4 +1,4 @@
-package chrconv
+package tileconv
 
 // BitDepth represents the number of bits to use per pixel of each tile.
 //

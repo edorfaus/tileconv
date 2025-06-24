@@ -1,3 +1,3 @@
-module github.com/edorfaus/chrconv
+module github.com/edorfaus/tileconv
 
 go 1.19

@@ -1,30 +1,30 @@
-package chrconv_test
+package tileconv_test
 
 import (
 	"image"
 	"reflect"
 	"testing"
 
-	"github.com/edorfaus/chrconv"
+	"github.com/edorfaus/tileconv"
 )
 
 func TestTilePlanarSize(t *testing.T) {
-	check := func(bd chrconv.BitDepth, want int) {
+	check := func(bd tileconv.BitDepth, want int) {
 		t.Helper()
-		tp := chrconv.TilePlanar{BitDepth: bd}
+		tp := tileconv.TilePlanar{BitDepth: bd}
 		got := tp.Size()
 		if got != want {
 			t.Errorf("depth %v size: want %v, got %v", bd, want, got)
 		}
 	}
-	check(chrconv.BD1, 8*1)
-	check(chrconv.BD2, 8*2)
-	check(chrconv.BD3, 8*3)
-	check(chrconv.BD4, 8*4)
-	check(chrconv.BD5, 8*5)
-	check(chrconv.BD6, 8*6)
-	check(chrconv.BD7, 8*7)
-	check(chrconv.BD8, 8*8)
+	check(tileconv.BD1, 8*1)
+	check(tileconv.BD2, 8*2)
+	check(tileconv.BD3, 8*3)
+	check(tileconv.BD4, 8*4)
+	check(tileconv.BD5, 8*5)
+	check(tileconv.BD6, 8*6)
+	check(tileconv.BD7, 8*7)
+	check(tileconv.BD8, 8*8)
 }
 
 func TestTilePlanarEncode(t *testing.T) {
@@ -33,12 +33,12 @@ func TestTilePlanarEncode(t *testing.T) {
 	var failCount int
 	const maxFails = 4
 
-	check := func(t *testing.T, bd chrconv.BitDepth, x, y int) {
+	check := func(t *testing.T, bd tileconv.BitDepth, x, y int) {
 		want := td.TilePlanar(x, y, bd.Planes())
 		src := td.FullImage()
 		got := make([]byte, len(want))
 
-		tp := chrconv.TilePlanar{BitDepth: bd}
+		tp := tileconv.TilePlanar{BitDepth: bd}
 		tp.Encode(src, x, y, got)
 
 		if !reflect.DeepEqual(src, goodSrc) {
@@ -58,7 +58,7 @@ func TestTilePlanarEncode(t *testing.T) {
 		}
 	}
 
-	runTestForDepth := func(t *testing.T, bd chrconv.BitDepth) {
+	runTestForDepth := func(t *testing.T, bd tileconv.BitDepth) {
 		failCount = 0
 		for y := -4; y < 4 && failCount < maxFails; y++ {
 			for x := -4; x < 4 && failCount < maxFails; x++ {
@@ -81,7 +81,7 @@ func TestTilePlanarEncode(t *testing.T) {
 				return
 			}
 
-			for bd := chrconv.BD1; bd <= chrconv.BD8; bd++ {
+			for bd := tileconv.BD1; bd <= tileconv.BD8; bd++ {
 				runTestForDepth(t, bd)
 			}
 		})
@@ -95,7 +95,7 @@ func TestTilePlanarDecode(t *testing.T) {
 	const maxBadPix = 2
 	const maxFails = 2
 
-	check := func(t *testing.T, bd chrconv.BitDepth, x, y int) {
+	check := func(t *testing.T, bd tileconv.BitDepth, x, y int) {
 		failed := false
 		errorf := func(f string, a ...any) {
 			args := append([]any{bd, x, y}, a...)
@@ -114,7 +114,7 @@ func TestTilePlanarDecode(t *testing.T) {
 		src := td.TilePlanar(x, y, bd.Planes())
 		got := td.BaseImage()
 
-		tp := chrconv.TilePlanar{BitDepth: bd}
+		tp := tileconv.TilePlanar{BitDepth: bd}
 		tp.Decode(src, got, x, y)
 
 		goodSrc := td.TilePlanar(x, y, bd.Planes())
@@ -165,7 +165,7 @@ func TestTilePlanarDecode(t *testing.T) {
 		}
 	}
 
-	runTestForDepth := func(t *testing.T, bd chrconv.BitDepth) {
+	runTestForDepth := func(t *testing.T, bd tileconv.BitDepth) {
 		failCount = 0
 		for y := -4; y < 4 && failCount < maxFails; y++ {
 			for x := -4; x < 4 && failCount < maxFails; x++ {
@@ -184,7 +184,7 @@ func TestTilePlanarDecode(t *testing.T) {
 			fullImage = td.FullImage()
 			baseImage = td.BaseImage()
 
-			for bd := chrconv.BD1; bd <= chrconv.BD8; bd++ {
+			for bd := tileconv.BD1; bd <= tileconv.BD8; bd++ {
 				runTestForDepth(t, bd)
 			}
 		})

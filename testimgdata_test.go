@@ -1,4 +1,4 @@
-package chrconv_test
+package tileconv_test
 
 import (
 	"image"

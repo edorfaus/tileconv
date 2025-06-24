@@ -1,4 +1,4 @@
-package chrconv
+package tileconv
 
 // Packed is a Codec that encodes each tile as a packed-pixel image,
 // with the bits for each pixel of the tile stored contiguously, such

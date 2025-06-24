@@ -1,4 +1,4 @@
-package chrconv_test
+package tileconv_test
 
 import (
 	"bytes"
@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/edorfaus/chrconv"
+	"github.com/edorfaus/tileconv"
 )
 
 // TestEncode_Data tests that Encode() actually calls the codec properly
@@ -19,7 +19,7 @@ func TestEncode_Data(t *testing.T) {
 		c := &testCodec{t: t, copies: copies}
 		w := &bytes.Buffer{}
 
-		err := chrconv.Encode(src, w, c)
+		err := tileconv.Encode(src, w, c)
 
 		if err != nil {
 			t.Errorf("unexpected encode error (%T): %v", err, err)
@@ -123,7 +123,7 @@ func TestEncode_Error(t *testing.T) {
 			t.Helper()
 			w := &ErrWriter{Remain: remain}
 
-			err := chrconv.Encode(src, w, c)
+			err := tileconv.Encode(src, w, c)
 
 			if err == nil {
 				if expected {

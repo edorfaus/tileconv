@@ -1,4 +1,4 @@
-package chrconv
+package tileconv
 
 // Codec is the interface implemented by each tile image format type.
 //

@@ -1,4 +1,4 @@
-package chrconv
+package tileconv
 
 // TilePlanar is a Codec that encodes each tile as a planar image, with
 // each plane of the tile stored contiguously - such that a tile with

@@ -1,9 +1,9 @@
-package chrconv_test
+package tileconv_test
 
 import (
 	"testing"
 
-	"github.com/edorfaus/chrconv"
+	"github.com/edorfaus/tileconv"
 )
 
 // testCodec is a test implementation of a Codec, used to test functions
@@ -15,13 +15,13 @@ type testCodec struct {
 	decodes int
 }
 
-var _ chrconv.Codec = &testCodec{}
+var _ tileconv.Codec = &testCodec{}
 
 func (c *testCodec) Size() int {
 	return 8 * 8 * c.copies
 }
 
-func (c *testCodec) Encode(s chrconv.SourceImage, x, y int, d []byte) {
+func (c *testCodec) Encode(s tileconv.SourceImage, x, y int, d []byte) {
 	c.encodes++
 
 	sz := c.Size()
@@ -40,7 +40,7 @@ func (c *testCodec) Encode(s chrconv.SourceImage, x, y int, d []byte) {
 	}
 }
 
-func (c *testCodec) Decode(src []byte, dst chrconv.DestImage, x, y int) {
+func (c *testCodec) Decode(s []byte, d tileconv.DestImage, x, y int) {
 	c.decodes++
 	// TODO
 }
