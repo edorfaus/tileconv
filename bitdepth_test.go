@@ -86,3 +86,79 @@ func TestBitDepthBytesPerTile(t *testing.T) {
 	check(tileconv.BD7, 8*7)
 	check(tileconv.BD8, 8*8)
 }
+
+func TestBitDepthUnmarshalText(t *testing.T) {
+	var zero tileconv.BitDepth
+
+	checkOK := func(src string, want, from tileconv.BitDepth) {
+		t.Helper()
+		got := from
+		err := got.UnmarshalText([]byte(src))
+		if err != nil {
+			t.Errorf(
+				"unmarshal %q from %v: unexpected error: %v",
+				src, from, err,
+			)
+		}
+		if got != want {
+			t.Errorf(
+				"unmarshal %q from %v: want %v, got %v",
+				src, from, want, got,
+			)
+		}
+	}
+
+	checkOK("1", tileconv.BD1, zero)
+	checkOK("2", tileconv.BD2, zero)
+	checkOK("3", tileconv.BD3, zero)
+	checkOK("4", tileconv.BD4, zero)
+	checkOK("5", tileconv.BD5, zero)
+	checkOK("6", tileconv.BD6, zero)
+	checkOK("7", tileconv.BD7, zero)
+	checkOK("8", tileconv.BD8, zero)
+
+	checkOK("1", tileconv.BD1, tileconv.BD8)
+	checkOK("2", tileconv.BD2, tileconv.BD7)
+	checkOK("3", tileconv.BD3, tileconv.BD6)
+	checkOK("4", tileconv.BD4, tileconv.BD5)
+	checkOK("5", tileconv.BD5, tileconv.BD4)
+	checkOK("6", tileconv.BD6, tileconv.BD3)
+	checkOK("7", tileconv.BD7, tileconv.BD2)
+	checkOK("8", tileconv.BD8, tileconv.BD1)
+
+	checkBad := func(src string, want tileconv.BitDepth) {
+		t.Helper()
+		got := want
+		err := got.UnmarshalText([]byte(src))
+		if err == nil {
+			t.Errorf(
+				"unmarshal %q from %v: expected error, got nil",
+				src, want,
+			)
+		}
+		if got != want {
+			t.Errorf(
+				"unmarshal %q from %v: want %v, got %v",
+				src, want, want, got,
+			)
+		}
+	}
+
+	checkBad("", zero)
+	checkBad(" ", zero)
+	checkBad("0", zero)
+	checkBad("9", zero)
+	checkBad("01", zero)
+	checkBad("1 ", zero)
+	checkBad(" 1", zero)
+	checkBad(" 1 ", zero)
+
+	checkBad("", tileconv.BD4)
+	checkBad(" ", tileconv.BD4)
+	checkBad("0", tileconv.BD4)
+	checkBad("9", tileconv.BD4)
+	checkBad("01", tileconv.BD4)
+	checkBad("1 ", tileconv.BD4)
+	checkBad(" 1", tileconv.BD4)
+	checkBad(" 1 ", tileconv.BD4)
+}

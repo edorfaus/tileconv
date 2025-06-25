@@ -1,5 +1,9 @@
 package tileconv
 
+import (
+	"errors"
+)
+
 // BitDepth represents the number of bits to use per pixel of each tile.
 //
 // E.g. for a 4-color palette, there are 2 bits per pixel, so depth 2.
@@ -45,4 +49,13 @@ func (d BitDepth) ColorMask() uint8 {
 // store a single tile using this bit depth.
 func (d BitDepth) BytesPerTile() int {
 	return int(d) * BytesPerPlane
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (d *BitDepth) UnmarshalText(text []byte) error {
+	if len(text) != 1 || text[0] < '1' || text[0] > '8' {
+		return errors.New("invalid bit depth")
+	}
+	*d = BitDepth(text[0] - '0')
+	return nil
 }
