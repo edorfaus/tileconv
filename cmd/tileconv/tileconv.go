@@ -33,9 +33,10 @@ type Format string
 
 func (Args) Epilogue() string {
 	return `Tile data formats:
-    p, packed      : packed-pixel
-    tp, tileplanar : planar, per tile
-    rp, rowplanar  : planar, per row`
+    p, packed               : packed-pixel
+    tp, tileplanar          : planar, per tile
+    rp, rowplanar           : planar, per row
+    trpp, tilerowpairplanar : planar, pairs per row, rest per tile`
 }
 
 func (f *Format) UnmarshalText(text []byte) error {
@@ -43,6 +44,7 @@ func (f *Format) UnmarshalText(text []byte) error {
 	case "p", "packed":
 	case "tp", "tileplanar":
 	case "rp", "rowplanar":
+	case "trpp", "tilerowpairplanar":
 	default:
 		return fmt.Errorf("unknown tile format %q", text)
 	}
@@ -64,6 +66,10 @@ func run(args Args) (e error) {
 		}
 	case "rp", "rowplanar":
 		codec = tileconv.RowPlanar{
+			BitDepth: args.Bpp,
+		}
+	case "trpp", "tilerowpairplanar":
+		codec = tileconv.TileRowPairPlanar{
 			BitDepth: args.Bpp,
 		}
 	default:
