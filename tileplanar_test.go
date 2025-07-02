@@ -36,9 +36,9 @@ func TestTilePlanarEncode(t *testing.T) {
 	check := func(t *testing.T, bd tileconv.BitDepth, x, y int) {
 		want := td.TilePlanar(x, y, bd.Planes())
 		src := td.FullImage()
-		got := make([]byte, len(want))
 
 		tp := tileconv.TilePlanar{BitDepth: bd}
+		got := make([]byte, tp.Size())
 		tp.Encode(src, x, y, got)
 
 		if !reflect.DeepEqual(src, goodSrc) {

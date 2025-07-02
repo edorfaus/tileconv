@@ -36,9 +36,9 @@ func TestPackedEncode(t *testing.T) {
 	check := func(t *testing.T, bd tileconv.BitDepth, x, y int) {
 		want := td.Packed(x, y, bd.Planes())
 		src := td.FullImage()
-		got := make([]byte, len(want))
 
 		c := tileconv.Packed{BitDepth: bd}
+		got := make([]byte, c.Size())
 		c.Encode(src, x, y, got)
 
 		if !reflect.DeepEqual(src, goodSrc) {
