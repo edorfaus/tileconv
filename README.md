@@ -1,6 +1,11 @@
 TileConv
 ========
 
+[![Go Reference][GoRefImage]][GoRefLink]
+
+[GoRefImage]: https://pkg.go.dev/badge/github.com/edorfaus/tileconv.svg
+[GoRefLink]: https://pkg.go.dev/github.com/edorfaus/tileconv
+
 This project is aimed at being a library for converting images to retro
 8x8 tile graphics formats (and back), and for convenience also includes
 a CLI tool that uses the library to do that conversion for basic images.
