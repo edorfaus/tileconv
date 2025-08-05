@@ -15,7 +15,7 @@ func runCodecEncodeTests(
 ) {
 	t.Helper()
 
-	runTestAt := func(t *testing.T, name string, x, y int) {
+	runTestAt := func(t *testing.T, name string, x, y, dLen, dCap int) {
 		t.Helper()
 		t.Run(name, func(t *testing.T) {
 			t.Helper()
@@ -23,19 +23,39 @@ func runCodecEncodeTests(
 			src := newTestImage(x, y, srcPix)
 			goodSrc := newTestImage(x, y, srcPix)
 
-			got := make([]byte, codec.Size())
-			codec.Encode(src, x, y, got)
+			// Make and fill some buffers to test for overflow.
+			got := make([]byte, dCap)
+			expect := make([]byte, dCap)
+			for i := 0; i < len(expect); i++ {
+				got[i] = byte(i) ^ 0b11001011
+				expect[i] = byte(i) ^ 0b11001011
+			}
+			copy(expect, want)
+
+			codec.Encode(src, x, y, got[:dLen])
 
 			verifyImage(t, "source image corrupted", x, y, src, goodSrc)
 
-			verify(t, "bad encoded data", got, want)
+			sz := codec.Size()
+			verify(t, "bad encoded data", got[:sz], expect[:sz])
+			verify(t, "corrupted dest tail", got[sz:], expect[sz:])
 		})
 	}
 
 	t.Run(name, func(t *testing.T) {
 		t.Helper()
-		runTestAt(t, "at_-3,-2", -3, -2)
-		runTestAt(t, "at_1,2", 1, 2)
+
+		size := codec.Size()
+		bigSize := size*2 + size/2
+
+		// Test with destination having exact length and capacity
+		runTestAt(t, "at_-2,3_capDst", -2, 3, size, size)
+
+		// Test with destination having exact length but bigger capacity
+		runTestAt(t, "at_-3,-2_lenDst", -3, -2, size, bigSize)
+
+		// Test with big destination (longer than needed)
+		runTestAt(t, "at_1,2_bigDst", 1, 2, bigSize, bigSize)
 	})
 }
 
@@ -57,9 +77,11 @@ func runCodecDecodeTests(
 			got := newTestImage(0, 0, nil)
 			codec.Decode(testSrc, got, x, y)
 
+			sz := codec.Size()
+			verify(t, "corrupted source data", testSrc[:sz], src[:sz])
 			verify(
-				t, "source data was corrupted",
-				testSrc[:cap(testSrc)], src[:cap(src)],
+				t, "corrupted source tail",
+				testSrc[sz:cap(testSrc)], src[sz:cap(src)],
 			)
 
 			want := newTestImage(x, y, wantPix)
@@ -70,7 +92,7 @@ func runCodecDecodeTests(
 	t.Run(name, func(t *testing.T) {
 		t.Helper()
 
-		testSrc := make([]byte, len(src)*4 + len(src)/2)
+		testSrc := make([]byte, len(src)*2+len(src)/2)
 		for i := 0; i < len(testSrc); i++ {
 			testSrc[i] = byte(i) ^ 0b11001011
 		}
