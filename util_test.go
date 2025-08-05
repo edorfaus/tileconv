@@ -45,6 +45,16 @@ func runCodecEncodeTests(
 	t.Run(name, func(t *testing.T) {
 		t.Helper()
 
+		if len(want) != codec.Size() {
+			// Either the calling test or codec.Size() is bad; this test
+			// relies on both being correct, so fail out early.
+			t.Errorf(
+				"codec expects %v bytes, got %v bytes as wanted data",
+				codec.Size(), len(want),
+			)
+			return
+		}
+
 		size := codec.Size()
 		bigSize := size*2 + size/2
 
@@ -91,6 +101,16 @@ func runCodecDecodeTests(
 
 	t.Run(name, func(t *testing.T) {
 		t.Helper()
+
+		if len(src) != codec.Size() {
+			// Either the calling test or codec.Size() is bad; this test
+			// relies on both being correct, so fail out early.
+			t.Errorf(
+				"codec expects %v bytes, got %v bytes as source data",
+				codec.Size(), len(src),
+			)
+			return
+		}
 
 		testSrc := make([]byte, len(src)*2+len(src)/2)
 		for i := 0; i < len(testSrc); i++ {
