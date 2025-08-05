@@ -206,6 +206,20 @@ func verify(t *testing.T, what string, got, want any) {
 	}
 }
 
+// pixBits takes the given pixel grid, and returns a new one of the same
+// size that contains only the low N bits of the original values.
+func pixBits(bits int, pix [][]uint8) [][]uint8 {
+	mask := uint8(1<<bits) - 1
+	out := make([][]uint8, len(pix))
+	for i := 0; i < len(pix); i++ {
+		out[i] = make([]uint8, len(pix[i]))
+		for j := 0; j < len(pix[i]); j++ {
+			out[i][j] = pix[i][j] & mask
+		}
+	}
+	return out
+}
+
 func newTestImage(x, y int, px [][]uint8) *image.Paletted {
 	img := image.NewPaletted(
 		image.Rect(-4, -4, 8+4, 8+4), newTestPalette(),
