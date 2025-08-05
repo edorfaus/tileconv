@@ -1,8 +1,6 @@
 package tileconv_test
 
 import (
-	"image"
-	"reflect"
 	"testing"
 
 	"github.com/edorfaus/tileconv"
@@ -179,104 +177,222 @@ func TestPackedEncode(t *testing.T) {
 }
 
 func TestPackedDecode(t *testing.T) {
-	var td *testImageData
-	var fullImage, baseImage *image.Paletted
-	var failCount int
-	const maxBadPix = 2
-	const maxFails = 2
+	// This uses the same pixel data as for the Encode test above, just
+	// adjusted for each bit depth since the results necessarily vary.
 
-	check := func(t *testing.T, bd tileconv.BitDepth, x, y int) {
-		failed := false
-		errorf := func(f string, a ...any) {
-			args := append([]any{bd, x, y}, a...)
-			t.Errorf("BD%v @ %v,%v: "+f, args...)
-			if !failed {
-				failed = true
-				failCount++
-			}
-		}
-		verify := func(what string, got, want any) {
-			if !reflect.DeepEqual(got, want) {
-				errorf("%s:\nwant: %v\n got: %v", what, want, got)
-			}
-		}
+	runCodecDecodeTests(
+		t, "BD1", tileconv.Packed{BitDepth: tileconv.BD1},
+		[]byte{
+			0b10100100,
+			0b11100110,
+			0b01110010,
+			0b00100111,
+			0b10110100,
+			0b11101110,
+			0b10100101,
+			0b10100100,
+		},
+		[][]uint8{
+			{1, 0, 1, 0, 0, 1, 0, 0},
+			{1, 1, 1, 0, 0, 1, 1, 0},
+			{0, 1, 1, 1, 0, 0, 1, 0},
+			{0, 0, 1, 0, 0, 1, 1, 1},
+			{1, 0, 1, 1, 0, 1, 0, 0},
+			{1, 1, 1, 0, 1, 1, 1, 0},
+			{1, 0, 1, 0, 0, 1, 0, 1},
+			{1, 0, 1, 0, 0, 1, 0, 0},
+		},
+	)
 
-		src := td.Packed(x, y, bd.Planes())
-		got := td.BaseImage()
+	runCodecDecodeTests(
+		t, "BD2", tileconv.Packed{BitDepth: tileconv.BD2},
+		[]byte{
+			0b01_00_01_10, 0b10_11_00_00,
+			0b01_11_11_10, 0b00_11_11_00,
+			0b10_11_01_11, 0b10_10_01_10,
+			0b00_10_01_00, 0b10_01_11_01,
+			0b11_00_01_11, 0b00_11_10_00,
+			0b01_01_01_10, 0b01_01_11_00,
+			0b01_00_01_10, 0b10_01_00_01,
+			0b01_00_01_00, 0b00_01_10_10,
+		},
+		[][]uint8{
+			{0b01, 0b00, 0b01, 0b10, 0b10, 0b11, 0b00, 0b00},
+			{0b01, 0b11, 0b11, 0b10, 0b00, 0b11, 0b11, 0b00},
+			{0b10, 0b11, 0b01, 0b11, 0b10, 0b10, 0b01, 0b10},
+			{0b00, 0b10, 0b01, 0b00, 0b10, 0b01, 0b11, 0b01},
+			{0b11, 0b00, 0b01, 0b11, 0b00, 0b11, 0b10, 0b00},
+			{0b01, 0b01, 0b01, 0b10, 0b01, 0b01, 0b11, 0b00},
+			{0b01, 0b00, 0b01, 0b10, 0b10, 0b01, 0b00, 0b01},
+			{0b01, 0b00, 0b01, 0b00, 0b00, 0b01, 0b10, 0b10},
+		},
+	)
 
-		c := tileconv.Packed{BitDepth: bd}
-		c.Decode(src, got, x, y)
+	runCodecDecodeTests(
+		t, "BD3", tileconv.Packed{BitDepth: tileconv.BD3},
+		[]byte{
+			0b001_100_10, 0b1_010_010_1, 0b11_100_000,
+			0b001_011_11, 0b1_010_100_0, 0b11_011_000,
+			0b110_111_00, 0b1_111_110_0, 0b10_101_110,
+			0b000_010_10, 0b1_100_010_1, 0b01_011_101,
+			0b011_000_10, 0b1_111_000_1, 0b11_110_000,
+			0b001_101_00, 0b1_110_001_1, 0b01_111_100,
+			0b001_000_00, 0b1_110_010_1, 0b01_100_001,
+			0b001_100_10, 0b1_000_000_1, 0b01_110_110,
+		},
+		[][]uint8{
+			{0b001, 0b100, 0b101, 0b010, 0b010, 0b111, 0b100, 0b000},
+			{0b001, 0b011, 0b111, 0b010, 0b100, 0b011, 0b011, 0b000},
+			{0b110, 0b111, 0b001, 0b111, 0b110, 0b010, 0b101, 0b110},
+			{0b000, 0b010, 0b101, 0b100, 0b010, 0b101, 0b011, 0b101},
+			{0b011, 0b000, 0b101, 0b111, 0b000, 0b111, 0b110, 0b000},
+			{0b001, 0b101, 0b001, 0b110, 0b001, 0b101, 0b111, 0b100},
+			{0b001, 0b000, 0b001, 0b110, 0b010, 0b101, 0b100, 0b001},
+			{0b001, 0b100, 0b101, 0b000, 0b000, 0b101, 0b110, 0b110},
+		},
+	)
 
-		goodSrc := td.Packed(x, y, bd.Planes())
-		verify("source data was corrupted", src, goodSrc)
+	runCodecDecodeTests(
+		t, "BD4", tileconv.Packed{BitDepth: tileconv.BD4},
+		[]byte{
+			0x14, 0xD2, 0xAF, 0xC0,
+			0x13, 0xF2, 0x4B, 0x38,
+			0xEF, 0x9F, 0x62, 0x5E,
+			0x8A, 0xD4, 0xAD, 0xB5,
+			0xB8, 0xDF, 0x87, 0xE0,
+			0x1D, 0x96, 0x15, 0xF4,
+			0x18, 0x9E, 0x25, 0xC1,
+			0x14, 0x58, 0x85, 0x6E,
+		},
+		[][]uint8{
+			{0x1, 0x4, 0xD, 0x2, 0xA, 0xF, 0xC, 0x0},
+			{0x1, 0x3, 0xF, 0x2, 0x4, 0xB, 0x3, 0x8},
+			{0xE, 0xF, 0x9, 0xF, 0x6, 0x2, 0x5, 0xE},
+			{0x8, 0xA, 0xD, 0x4, 0xA, 0xD, 0xB, 0x5},
+			{0xB, 0x8, 0xD, 0xF, 0x8, 0x7, 0xE, 0x0},
+			{0x1, 0xD, 0x9, 0x6, 0x1, 0x5, 0xF, 0x4},
+			{0x1, 0x8, 0x9, 0xE, 0x2, 0x5, 0xC, 0x1},
+			{0x1, 0x4, 0x5, 0x8, 0x8, 0x5, 0x6, 0xE},
+		},
+	)
 
-		verify("Stride was changed", got.Stride, baseImage.Stride)
-		verify("Rect was changed", got.Rect, baseImage.Rect)
-		verify("Palette was changed", got.Palette, baseImage.Palette)
+	runCodecDecodeTests(
+		t, "BD5", tileconv.Packed{BitDepth: tileconv.BD5},
+		[]byte{
+			0b00001_101, 0b00_11101_0, 0b0010_1101, 0b0_01111_11,
+			/**/ 0b100_00000,
+			0b00001_100, 0b11_11111_1, 0b0010_0010, 0b0_11011_10,
+			/**/ 0b011_01000,
+			0b01110_011, 0b11_11001_1, 0b1111_1011, 0b0_00010_00,
+			/**/ 0b101_01110,
+			0b01000_010, 0b10_11101_1, 0b0100_0101, 0b0_01101_01,
+			/**/ 0b011_10101,
+			0b11011_110, 0b00_01101_0, 0b1111_0100, 0b0_00111_11,
+			/**/ 0b110_00000,
+			0b10001_011, 0b01_11001_0, 0b0110_1000, 0b1_00101_01,
+			/**/ 0b111_10100,
+			0b00001_110, 0b00_01001_0, 0b1110_0001, 0b0_00101_01,
+			/**/ 0b100_00001,
+			0b10001_101, 0b00_10101_1, 0b1000_0100, 0b0_10101_10,
+			/**/ 0b110_01110,
+		},
+		[][]uint8{
+			{0x01, 0x14, 0x1D, 0x02, 0x1A, 0x0F, 0x1C, 0x00},
+			{0x01, 0x13, 0x1F, 0x12, 0x04, 0x1B, 0x13, 0x08},
+			{0x0E, 0x0F, 0x19, 0x1F, 0x16, 0x02, 0x05, 0x0E},
+			{0x08, 0x0A, 0x1D, 0x14, 0x0A, 0x0D, 0x0B, 0x15},
+			{0x1B, 0x18, 0x0D, 0x0F, 0x08, 0x07, 0x1E, 0x00},
+			{0x11, 0x0D, 0x19, 0x06, 0x11, 0x05, 0x0F, 0x14},
+			{0x01, 0x18, 0x09, 0x0E, 0x02, 0x05, 0x0C, 0x01},
+			{0x11, 0x14, 0x15, 0x18, 0x08, 0x15, 0x16, 0x0E},
+		},
+	)
 
-		badPixel := func(c int, m string, tx, ty int, w, g uint8) {
-			if c < maxBadPix {
-				errorf("%s at %v,%v: want %v, got %v", m, tx, ty, w, g)
-			}
-		}
+	runCodecDecodeTests(
+		t, "BD6", tileconv.Packed{BitDepth: tileconv.BD6},
+		[]byte{
+			0b000001_01, 0b0100_1111, 0b01_000010, 0b111010_10,
+			/**/ 0b1111_1111, 0b00_000000,
+			0b000001_01, 0b0011_1111, 0b11_010010, 0b000100_01,
+			/**/ 0b1011_1100, 0b11_001000,
+			0b101110_00, 0b1111_1110, 0b01_011111, 0b110110_10,
+			/**/ 0b0010_1001, 0b01_101110,
+			0b101000_10, 0b1010_1111, 0b01_110100, 0b001010_10,
+			/**/ 0b1101_0010, 0b11_110101,
+			0b111011_01, 0b1000_0011, 0b01_101111, 0b001000_10,
+			/**/ 0b0111_0111, 0b10_100000,
+			0b110001_00, 0b1101_1110, 0b01_000110, 0b010001_00,
+			/**/ 0b0101_0011, 0b11_010100,
+			0b100001_11, 0b1000_0010, 0b01_101110, 0b100010_00,
+			/**/ 0b0101_1011, 0b00_100001,
+			0b010001_01, 0b0100_0101, 0b01_111000, 0b001000_11,
+			/**/ 0b0101_0101, 0b10_001110,
+		},
+		[][]uint8{
+			{0x01, 0x14, 0x3D, 0x02, 0x3A, 0x2F, 0x3C, 0x00},
+			{0x01, 0x13, 0x3F, 0x12, 0x04, 0x1B, 0x33, 0x08},
+			{0x2E, 0x0F, 0x39, 0x1F, 0x36, 0x22, 0x25, 0x2E},
+			{0x28, 0x2A, 0x3D, 0x34, 0x0A, 0x2D, 0x0B, 0x35},
+			{0x3B, 0x18, 0x0D, 0x2F, 0x08, 0x27, 0x1E, 0x20},
+			{0x31, 0x0D, 0x39, 0x06, 0x11, 0x05, 0x0F, 0x14},
+			{0x21, 0x38, 0x09, 0x2E, 0x22, 0x05, 0x2C, 0x21},
+			{0x11, 0x14, 0x15, 0x38, 0x08, 0x35, 0x16, 0x0E},
+		},
+	)
 
-		inCount, outCount := 0, 0
-		b := baseImage.Bounds()
-		area := image.Rect(x, y, x+8, y+8)
-		mask := bd.ColorMask()
-		for ty := b.Min.Y; ty < b.Max.Y; ty++ {
-			for tx := b.Min.X; tx < b.Max.X; tx++ {
-				g := got.ColorIndexAt(tx, ty)
-				var w uint8
+	runCodecDecodeTests(
+		t, "BD7", tileconv.Packed{BitDepth: tileconv.BD7},
+		[]byte{
+			0b0000001_0, 0b010100_11, 0b11101_100, 0b0010_1111,
+			/**/ 0b010_01011, 0b11_111110, 0b0_1000000,
+			0b1000001_1, 0b010011_11, 0b11111_001, 0b0010_0000,
+			/**/ 0b100_10110, 0b11_111001, 0b1_1001000,
+			0b1101110_1, 0b001111_11, 0b11001_101, 0b1111_1110,
+			/**/ 0b110_11000, 0b10_010010, 0b1_1101110,
+			0b1101000_0, 0b101010_01, 0b11101_111, 0b0100_1001,
+			/**/ 0b010_01011, 0b01_000101, 0b1_1110101,
+			0b1111011_0, 0b011000_00, 0b01101_010, 0b1111_1001,
+			/**/ 0b000_01001, 0b11_001111, 0b0_1100000,
+			0b0110001_0, 0b001101_01, 0b11001_100, 0b0110_1010,
+			/**/ 0b001_00001, 0b01_000111, 0b1_1010100,
+			0b0100001_1, 0b111000_00, 0b01001_010, 0b1110_1100,
+			/**/ 0b010_00001, 0b01_110110, 0b0_1100001,
+			0b1010001_0, 0b010100_10, 0b10101_111, 0b1000_0001,
+			/**/ 0b000_11101, 0b01_101011, 0b0_1001110,
+		},
+		[][]uint8{
+			{0x01, 0x14, 0x7D, 0x42, 0x7A, 0x2F, 0x7C, 0x40},
+			{0x41, 0x53, 0x7F, 0x12, 0x04, 0x5B, 0x73, 0x48},
+			{0x6E, 0x4F, 0x79, 0x5F, 0x76, 0x62, 0x25, 0x6E},
+			{0x68, 0x2A, 0x3D, 0x74, 0x4A, 0x2D, 0x0B, 0x75},
+			{0x7B, 0x18, 0x0D, 0x2F, 0x48, 0x27, 0x1E, 0x60},
+			{0x31, 0x0D, 0x39, 0x46, 0x51, 0x05, 0x0F, 0x54},
+			{0x21, 0x78, 0x09, 0x2E, 0x62, 0x05, 0x6C, 0x61},
+			{0x51, 0x14, 0x55, 0x78, 0x08, 0x75, 0x56, 0x4E},
+		},
+	)
 
-				inside := image.Point{tx, ty}.In(area)
-				if inside {
-					w = mask & fullImage.ColorIndexAt(tx, ty)
-				} else {
-					w = baseImage.ColorIndexAt(tx, ty)
-				}
-				if g == w {
-					continue
-				}
-				if inside {
-					badPixel(inCount, "bad pixel", tx, ty, w, g)
-					inCount++
-				} else {
-					badPixel(outCount, "pixel corrupted", tx, ty, w, g)
-					outCount++
-				}
-			}
-		}
-		if inCount > 0 {
-			errorf("%v bad pixels in decode area", inCount)
-		}
-		if outCount > 0 {
-			errorf("%v corrupted pixels outside decode area", outCount)
-		}
-	}
-
-	runTestForDepth := func(t *testing.T, bd tileconv.BitDepth) {
-		failCount = 0
-		for y := -4; y < 4 && failCount < maxFails; y++ {
-			for x := -4; x < 4 && failCount < maxFails; x++ {
-				check(t, bd, x, y)
-			}
-		}
-		if failCount >= maxFails {
-			t.Logf("too many errors, skipping rest of depth %v", bd)
-		}
-	}
-
-	names := []string{"Seq", "Rng"}
-	for i, rng := range []bool{false, true} {
-		t.Run(names[i], func(t *testing.T) {
-			td = newTestImageData(rng)
-			fullImage = td.FullImage()
-			baseImage = td.BaseImage()
-
-			for bd := tileconv.BD1; bd <= tileconv.BD8; bd++ {
-				runTestForDepth(t, bd)
-			}
-		})
-	}
+	runCodecDecodeTests(
+		t, "BD8", tileconv.Packed{BitDepth: tileconv.BD8},
+		[]byte{
+			0x01, 0x94, 0xFD, 0xC2, 0xFA, 0x2F, 0xFC, 0xC0,
+			0x41, 0xD3, 0xFF, 0x12, 0x04, 0x5B, 0x73, 0xC8,
+			0x6E, 0x4F, 0xF9, 0x5F, 0xF6, 0x62, 0xA5, 0xEE,
+			0xE8, 0x2A, 0xBD, 0xF4, 0x4A, 0x2D, 0x0B, 0x75,
+			0xFB, 0x18, 0x0D, 0xAF, 0x48, 0xA7, 0x9E, 0xE0,
+			0xB1, 0x0D, 0x39, 0x46, 0x51, 0x85, 0x0F, 0xD4,
+			0xA1, 0x78, 0x89, 0x2E, 0xE2, 0x85, 0xEC, 0xE1,
+			0x51, 0x14, 0x55, 0x78, 0x08, 0x75, 0xD6, 0x4E,
+		},
+		[][]uint8{
+			{0x01, 0x94, 0xFD, 0xC2, 0xFA, 0x2F, 0xFC, 0xC0},
+			{0x41, 0xD3, 0xFF, 0x12, 0x04, 0x5B, 0x73, 0xC8},
+			{0x6E, 0x4F, 0xF9, 0x5F, 0xF6, 0x62, 0xA5, 0xEE},
+			{0xE8, 0x2A, 0xBD, 0xF4, 0x4A, 0x2D, 0x0B, 0x75},
+			{0xFB, 0x18, 0x0D, 0xAF, 0x48, 0xA7, 0x9E, 0xE0},
+			{0xB1, 0x0D, 0x39, 0x46, 0x51, 0x85, 0x0F, 0xD4},
+			{0xA1, 0x78, 0x89, 0x2E, 0xE2, 0x85, 0xEC, 0xE1},
+			{0x51, 0x14, 0x55, 0x78, 0x08, 0x75, 0xD6, 0x4E},
+		},
+	)
 }

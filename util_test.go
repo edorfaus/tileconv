@@ -14,6 +14,7 @@ func runCodecEncodeTests(
 	srcPix [][]uint8, want []byte,
 ) {
 	t.Helper()
+
 	runTestAt := func(t *testing.T, name string, x, y int) {
 		t.Helper()
 		t.Run(name, func(t *testing.T) {
@@ -25,26 +26,142 @@ func runCodecEncodeTests(
 			got := make([]byte, codec.Size())
 			codec.Encode(src, x, y, got)
 
-			if !reflect.DeepEqual(src, goodSrc) {
-				t.Errorf(
-					"source image was corrupted:\nwant: %#v\n got: %#v",
-					goodSrc, src,
-				)
-			}
+			verifyImage(t, "source image corrupted", x, y, src, goodSrc)
 
-			if !reflect.DeepEqual(got, want) {
-				t.Errorf(
-					"bad result:\nwant: %v\n got: %v",
-					want, got,
-				)
-			}
+			verify(t, "bad encoded data", got, want)
 		})
 	}
+
 	t.Run(name, func(t *testing.T) {
 		t.Helper()
 		runTestAt(t, "at_-3,-2", -3, -2)
 		runTestAt(t, "at_1,2", 1, 2)
 	})
+}
+
+func runCodecDecodeTests(
+	t *testing.T, name string, codec tileconv.Codec,
+	src []byte, wantPix [][]uint8,
+) {
+	t.Helper()
+
+	runTestAt := func(t *testing.T, name string, x, y int, src []byte) {
+		t.Helper()
+		t.Run(name, func(t *testing.T) {
+			t.Helper()
+
+			testSrc := make([]byte, cap(src))
+			copy(testSrc, src[:cap(src)])
+			testSrc = testSrc[:len(src)]
+
+			got := newTestImage(0, 0, nil)
+			codec.Decode(testSrc, got, x, y)
+
+			verify(
+				t, "source data was corrupted",
+				testSrc[:cap(testSrc)], src[:cap(src)],
+			)
+
+			want := newTestImage(x, y, wantPix)
+			verifyImage(t, "output image incorrect", x, y, got, want)
+		})
+	}
+
+	t.Run(name, func(t *testing.T) {
+		t.Helper()
+
+		testSrc := make([]byte, len(src)*4 + len(src)/2)
+		for i := 0; i < len(testSrc); i++ {
+			testSrc[i] = byte(i) ^ 0b11001011
+		}
+		copy(testSrc, src)
+
+		// Test with source having exact length and capacity
+		exactSrc := testSrc[:len(src):len(src)]
+		runTestAt(t, "at_-2,3_capSrc", -2, 3, exactSrc)
+
+		// Test with source having exact length but bigger capacity
+		runTestAt(t, "at_-3,-2_lenSrc", -3, -2, testSrc[:len(src)])
+
+		// Test with big source (longer than needed)
+		runTestAt(t, "at_1,2_bigSrc", 1, 2, testSrc)
+	})
+}
+
+func verifyImage(
+	t *testing.T, msg string, x, y int, got, want *image.Paletted,
+) {
+	t.Helper()
+
+	if reflect.DeepEqual(got, want) {
+		return
+	}
+
+	t.Errorf("%s:", msg)
+
+	verify(t, "  Stride is different", got.Stride, want.Stride)
+	verify(t, "  Rect is different", got.Rect, want.Rect)
+	verify(t, "  Palette is different", got.Palette, want.Palette)
+
+	// The max number of bad pixels that will be reported
+	const maxBadPix = 4
+
+	badPixel := func(m string, c, tx, ty int, g, w uint8) {
+		t.Helper()
+		if c < maxBadPix {
+			t.Errorf(
+				"  pixel at %v,%v (%vside): want %v, got %v",
+				tx, ty, m, w, g,
+			)
+		}
+	}
+
+	inCount, outCount := 0, 0
+	area := image.Rect(x, y, x+8, y+8)
+	b := want.Bounds().Intersect(got.Bounds())
+	for ty := b.Min.Y; ty < b.Max.Y; ty++ {
+		for tx := b.Min.X; tx < b.Max.X; tx++ {
+			g := got.ColorIndexAt(tx, ty)
+			w := want.ColorIndexAt(tx, ty)
+
+			if g == w {
+				continue
+			}
+
+			if (image.Point{tx, ty}).In(area) {
+				badPixel("in", inCount, tx, ty, g, w)
+				inCount++
+			} else {
+				badPixel("out", outCount, tx, ty, g, w)
+				outCount++
+			}
+		}
+	}
+	if inCount > 0 || outCount > 0 {
+		t.Errorf(
+			"  count of bad pixels: %v in + %v out = %v",
+			inCount, outCount, inCount+outCount,
+		)
+	}
+
+	pixCount := 0
+	for i := 0; i < len(got.Pix) && i < len(want.Pix); i++ {
+		if got.Pix[i] != want.Pix[i] {
+			pixCount++
+		}
+	}
+	if pixCount > 0 {
+		t.Errorf("  Pix is different in %v entries", pixCount)
+	}
+
+	verify(t, "  Pix length is different", len(got.Pix), len(want.Pix))
+}
+
+func verify(t *testing.T, what string, got, want any) {
+	t.Helper()
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("%s:\nwant: %#v\n got: %#v", what, want, got)
+	}
 }
 
 func newTestImage(x, y int, px [][]uint8) *image.Paletted {
