@@ -12,7 +12,6 @@ import (
 // TestEncode_Data tests that Encode() actually calls the codec properly
 // and writes the returned data to the Writer in the expected order.
 func TestEncode_Data(t *testing.T) {
-	var td *testImageData
 	var src, goodSrc *image.Paletted
 
 	runTest := func(t *testing.T, copies int) {
@@ -25,24 +24,15 @@ func TestEncode_Data(t *testing.T) {
 			t.Errorf("unexpected encode error (%T): %v", err, err)
 		}
 
-		if !reflect.DeepEqual(src, goodSrc) {
-			t.Errorf("source image was corrupted")
-		}
+		verifyImage(t, "corrupted source image", -4, -4, src, goodSrc)
 
-		verify := func(msg string, want, got int) {
-			t.Helper()
-			if got != want {
-				t.Errorf("bad %s: want %v, got %v", msg, want, got)
-			}
-		}
-
-		verify("encode call count", 4, c.encodes)
-		verify("decode call count", 0, c.decodes)
+		verify(t, "bad encode call count", c.encodes, 4)
+		verify(t, "bad decode call count", c.decodes, 0)
 
 		got := w.Bytes()
 
 		sz := c.Size()
-		verify("data length", 4*sz, len(got))
+		verify(t, "bad data length", len(got), 4*sz)
 
 		want := make([]byte, sz)
 		checkAt := func(x, y, chunk int) {
@@ -80,42 +70,32 @@ func TestEncode_Data(t *testing.T) {
 		checkAt(4, 4, 3)
 	}
 
-	names := []string{"Seq", "Rng"}
-	for i, rng := range []bool{false, true} {
-		t.Run(names[i], func(t *testing.T) {
-			td = newTestImageData(rng)
-			goodSrc = td.FullImage()
+	goodSrc = newTestImage(0, 0, nil)
 
-			if src := td.FullImage(); !reflect.DeepEqual(src, goodSrc) {
-				t.Errorf("bad test: source images are not equal")
-				return
-			}
+	t.Run("small", func(t *testing.T) {
+		src = newTestImage(0, 0, nil)
+		runTest(t, 1)
+	})
 
-			t.Run("small", func(t *testing.T) {
-				src = td.FullImage()
-				runTest(t, 1)
-			})
-			t.Run("large", func(t *testing.T) {
-				src = td.FullImage()
-				runTest(t, 2)
-			})
-			// An image with a size that is not an even multiple of the
-			// tile size shall be encoded as if the size was rounded up.
-			t.Run("non-even", func(t *testing.T) {
-				area := image.Rect(-4, -4, 5, 5)
-				goodSrc = goodSrc.SubImage(area).(*image.Paletted)
-				src = td.FullImage().SubImage(area).(*image.Paletted)
-				runTest(t, 1)
-			})
-		})
-	}
+	t.Run("large", func(t *testing.T) {
+		src = newTestImage(0, 0, nil)
+		runTest(t, 2)
+	})
+
+	// An image with a size that is not an even multiple of the
+	// tile size shall be encoded as if the size was rounded up.
+	t.Run("non-even", func(t *testing.T) {
+		area := image.Rect(-4, -4, 5, 5)
+		goodSrc = goodSrc.SubImage(area).(*image.Paletted)
+		src = newTestImage(0, 0, nil).SubImage(area).(*image.Paletted)
+		runTest(t, 1)
+	})
 }
 
 // TestEncode_Error tests that Encode() returns the errors that it got
 // from the Writer it writes to.
 func TestEncode_Error(t *testing.T) {
-	td := newTestImageData(false)
-	src := td.FullImage()
+	src := newTestImage(0, 0, nil)
 	c := &testCodec{t: t, copies: 1}
 
 	testFn := func(remain int, expected bool) func(*testing.T) {
